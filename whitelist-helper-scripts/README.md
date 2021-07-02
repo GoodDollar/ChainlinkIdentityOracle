@@ -19,7 +19,8 @@ The first script use two files as input parameters:
 
 ## Install
 ```
-git clone ...
+git clone https://github.com/apronotti/ChainlinkIdentityOracle.git
+# into whitelist-helper-scripts dir
 npm install
 ```
 ## Execute
