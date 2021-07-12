@@ -1,6 +1,7 @@
 {
-    "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs"
-    }
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "resolveJsonModule": true
   }
+}
