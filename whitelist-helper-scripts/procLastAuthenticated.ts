@@ -1,26 +1,23 @@
 import { ethers } from "ethers";
-import { range, chunk } from "lodash";
+import { chunk } from "lodash";
 export default async (
     _contract: ethers.Contract,
     _whitelisted: object,
     _whitelistedWLastAuthenticated: object,
-    step = 100,
-    parallel = 10
+    parallel = 1000
   ) => {
     const addresses = Object.keys(_whitelisted);
     const latestItem = addresses.length;
-    const items = range(0, latestItem, step);
     
-    for (let itemsChunk of chunk(items, parallel)) {
-      const ps = itemsChunk.map(async item => {
-          const psInt = addresses.slice(item,Math.min(item+step, latestItem)).map(async address => {
+    let processedCount = 0;
+    for (let itemsChunk of chunk(addresses, parallel)) {
+      const ps = itemsChunk.map(async address => {
             let lastAuthenticated = 
                 (await _contract.callStatic.lastAuthenticated(address));
             _whitelistedWLastAuthenticated[address] = lastAuthenticated.toNumber();
           });
-          console.log('Progress ... '+item+' from '+latestItem);
-          await Promise.all(psInt);
-      });
+      processedCount += itemsChunk.length;
+      console.log('Processing ... from: ' + (processedCount - itemsChunk.length) + ' to: ' + processedCount);
       await Promise.all(ps);
     }
   };
