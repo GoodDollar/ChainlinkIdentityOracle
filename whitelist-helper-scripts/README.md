@@ -16,7 +16,6 @@ These scripts reads from the Identity contract at 0xFa8d865A962ca8456dF331D78806
  * nodejs 
  * typescript module
 
-
 ## Install
 ```
 git clone https://github.com/apronotti/ChainlinkIdentityOracle.git
