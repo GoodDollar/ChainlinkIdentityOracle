@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { chunk } from "lodash";
+
 export default async (
     _contract: ethers.Contract,
     _whitelisted: object,
@@ -14,7 +15,7 @@ export default async (
       const ps = itemsChunk.map(async address => {
             let lastAuthenticated = 
                 (await _contract.callStatic.lastAuthenticated(address));
-            _whitelistedWLastAuthenticated[address] = lastAuthenticated.toNumber();
+            _whitelistedWLastAuthenticated[address] =  { lauth: lastAuthenticated.toNumber() };
           });
       processedCount += itemsChunk.length;
       console.log('Processing ... from: ' + (processedCount - itemsChunk.length) + ' to: ' + processedCount);

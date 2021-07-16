@@ -40,8 +40,6 @@ async function main() {
         step,
         parallel);
         
-    // It purge the whitelisted, removing addresses from WhitelistedRemoved event
-    const lAuthParallel: number = 1000;
     
     console.log('=======================================================================================');
     console.log('Purging Whitelist, deleting WhitelistedRemoved from block number: '+startBlock);
@@ -67,6 +65,10 @@ async function main() {
     // It save the whitelist into json file
     await saveToFile('whitelistedWBlock.json', whitelisted);
     
+    
+    // It purge the whitelisted, removing addresses from WhitelistedRemoved event
+    const lAuthParallel: number = 1000;
+    
     console.log(" Whitelisted size: "+Object.keys(whitelisted).length);
     console.log('=======================================================================================');
     console.log('Generating Whitelist with lastAuthenticated ... ');
@@ -76,7 +78,7 @@ async function main() {
                                 whitelistedWLastAuthenticated,
                                 lAuthParallel);
 
-    await saveToFile('whitelistedWlastAuthenticated-ethersjs.json',whitelistedWLastAuthenticated);
+    await saveToFile('whitelistedWlastAuthenticated.json',whitelistedWLastAuthenticated);
     
 }
 
