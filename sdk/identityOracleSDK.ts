@@ -1,9 +1,10 @@
+import { config } from "dotenv";
 import { ethers } from "ethers";
 import * as fs from 'fs';
 import MerkleTree from "merkle-tree-solidity";
 import fetch from "node-fetch";
 import { NFTStorage, Blob } from 'nft.storage'
-
+config();
 
 type Tree = {
     [key: string]: {
@@ -71,7 +72,7 @@ async function getTreeData() {
 }
 
 async function postTreeData() {
-    const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDYzNUZBMzJBMTJFMEYyODdlMzE4MUJlMUQyYkFiQWY2MjY5NkI0OTUiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYyNTg1ODMyMTg5NywibmFtZSI6IkdETEF1dGgifQ.NYJc0Lbk4-Wi7M1qPKKA9ggeYOQ9JTIUyByLJHiSuYM';
+    const apiKey =process.env.IPFS_API_KEY; 
     const client = new NFTStorage({ token: apiKey })
 
     const fileContent = JSON.parse(fs.readFileSync("whitelistedTree.test.json").toString());
