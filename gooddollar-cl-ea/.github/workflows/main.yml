@@ -1,0 +1,97 @@
+name: Actions
+
+on:
+  push:
+    branches:
+      - master
+  pull_request: ~
+
+env:
+  cache-name: main-ci
+
+jobs:
+  run-basic-checks:
+    name: Run linters and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12.x'
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.npm
+            ~/.cache
+            **/node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+      - run: yarn install
+      - run: yarn setup
+      - run: yarn lint
+      - run: yarn test:unit
+
+  test-example:
+    needs: [run-basic-checks]
+    name: Test example adapter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12.x'
+      - run: yarn install
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.npm
+            ~/.cache
+            **/node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+      - run: yarn setup
+      - run: yarn test:example-start-server&
+      - run: yarn test:example
+
+  # Read build strategy matrix of adapters, from a json file
+  matrix-adapters:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.result }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/github-script@v3
+        name: Create job matrix
+        id: create-matrix
+        with:
+          script: |
+            const script = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/matrix.js`)
+            return script()
+
+  build-adapters:
+    needs: [run-basic-checks, matrix-adapters]
+    name: (${{ matrix.adapter.type }}) Build ${{matrix.adapter.name}} adapter
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.matrix-adapters.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12.x'
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.npm
+            ~/.cache
+            **/node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+      - run: ${{ matrix.adapter.cmd }}
+      - run: ${{ matrix.adapter.docker }}

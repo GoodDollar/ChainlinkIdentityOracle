@@ -1,0 +1,11 @@
+{
+  "name": "gooddollar-cl-ea",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^5.4.1"
+  }
+}

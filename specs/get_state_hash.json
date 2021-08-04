@@ -1,0 +1,27 @@
+{
+    "initiators": [
+      {
+        "type": "runlog",
+        "params": {
+          "address": "ORACLE_ADDRESS"
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "type": "gooddollar-adapter",
+        "confirmations": null,
+        "params": {
+          "endpoint": "statehash"
+        }
+      },
+      {
+        "type": "ethtx",
+        "confirmations": null,
+        "params": {
+        }
+      }
+    ],
+    "startAt": null,
+    "endAt": null
+}

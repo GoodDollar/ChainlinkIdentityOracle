@@ -1,0 +1,21 @@
+{
+    "initiators": [
+      {
+        "type": "web",
+        "params": {
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "type": "ethtx",
+        "confirmations": 0,
+        "params": {
+          "address": "IDENTITY_CONTRACT_ADDRESS",
+          "functionSelector": "startIPFSandStateHashProcess()"
+        }
+      }
+    ],
+    "startAt": null,
+    "endAt": null
+}
