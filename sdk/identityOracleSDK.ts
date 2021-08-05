@@ -63,11 +63,12 @@ async function postTreeData() {
       //handle successful authentication here
       console.log(result)
     })
-    .catch((err) => {
-      //handle error here
-      console.log(err)
-    })
-
+    .catch((error) => {
+      console.error("Error in pinata authentication :")
+      console.error(error) 
+      process.exit(1);
+    });
+        
   const sourcePath = 'whitelistedTree.test.json'
   let cid = ''
 
@@ -77,11 +78,11 @@ async function postTreeData() {
       //handle results here
       cid = result.IpfsHash
     })
-    .catch((err) => {
-      //handle error here
-      console.log(err)
-    })
-
+    .catch((error) => {
+      console.error("Error uploading file to IPFS :")
+      console.error(error)
+      process.exit(1);
+    });
   fs.writeFileSync('CID.txt', JSON.stringify(cid))
 
   return cid
