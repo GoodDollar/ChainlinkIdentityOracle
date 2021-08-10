@@ -33,7 +33,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     }
 
     mapping(address => WhitelistProofState) private whitelistProofState;
-    address [] private whitelistProofStateAddresses;
+    address [] private whitelistProofStateAddresses; // It's used to store of the whitelistProofState keys as helper to be able to iterate all items.
     event ProofResult(bool);
     mapping(address => bool) private oracleState; // Store oracle address ad if isAllowed
 
@@ -67,12 +67,6 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         _onlyOracle();
         stateHash = _merklehash;
         stateDataIPFS = _ipfscid;
-        // DELETE all history proofs
-        uint arrayLength = whitelistProofStateAddresses.length;
-        for (uint i=0; i<arrayLength; i++) {
-           delete whitelistProofState[whitelistProofStateAddresses[i]];
-        }
-        delete whitelistProofStateAddresses;
     }
 
     // It's is the first function to be called by the oracle to update IPFS CID and StatetHash
