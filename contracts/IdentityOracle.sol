@@ -2,12 +2,14 @@
 
 pragma solidity >0.8.0;
 
-import "https://github.com/GoodDollar/GoodProtocol/blob/master/contracts/utils/DAOUpgradeableContract.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/763144a7bb8e89c9919860958e7ddacfc1c4fcf2/contracts/utils/cryptography/MerkleProofUpgradeable.sol";
-import "https://github.com/smartcontractkit/chainlink/blob/047f660be0ffd97b3123fc4b5c930db83488a0fb/contracts/src/v0.8/ChainlinkClient.sol";
+import "hardhat/console.sol";
+//import "@gooddollar/goodprotocolv2/contracts/utils/DAOUpgradeableContract.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
+import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
-contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
+//contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
+contract IdentityOracle is ChainlinkClient, Ownable {
 
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
@@ -18,11 +20,11 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     bytes32 public tmpStateDataIPFS1; // this is used for the second of three steps of oracle updating process
     bytes32 public tmpStateDataIPFS2; // this is used for the second of three steps of oracle updating process
 
-    uint256 private constant ORACLE_PAYMENT = 10**16;
-    string  private JOBID_GET_STATE_HASH = ["JOBID_GET_STATE_HASH_VALUE"];
-    string  private JOBID_GET_IPFS_CID1 = ["JOBID_GET_IPFS_CID1_VALUE"];
-    string  private JOBID_GET_IPFS_CID2 = ["JOBID_GET_IPFS_CID2_VALUE"];
-    address private constant ORACLE_ADDRESS = [ORACLE_ADDRESS_VALUE];
+    uint256 private constant ORACLE_PAYMENT = 10**17;
+    string  private JOBID_GET_STATE_HASH = "f8336d36386945059b6039d9f407c827";
+    string  private JOBID_GET_IPFS_CID1 = "6fdec1f580574313a73fcd3224528711";
+    string  private JOBID_GET_IPFS_CID2 = "c6910a08a1594b82aa217db00aa0a486";
+    address private constant ORACLE_ADDRESS = 0x7bccD524Fd2Cc264Dd80E4589B4B3409fb61daC0;
 
     uint256 public lastStartUpdProcInvoked;
 
@@ -37,14 +39,21 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     event ProofResult(bool);
     mapping(address => bool) private oracleState; // Store oracle address ad if isAllowed
 
-    constructor() Ownable() {
-        setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088);  // It's Link address of Kovan
+    constructor(address _link) Ownable() {
+        if (_link == address(0)) {
+            setPublicChainlinkToken();
+        } else {
+            setChainlinkToken(_link);
+        }
+        //setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088);  // It's Link address of Kovan
+
         dao_avatar = msg.sender;
         oracleState[ORACLE_ADDRESS] = true;
+        oracleState[msg.sender] = true;
     }
 
     function _onlyOracle() internal view {
-        require(oracleState[msg.sender], "only avatar can call this method");
+        require(oracleState[msg.sender], "only allowed oracle can call this method");
     }
 
     function _onlyAvatarTmp() internal view {
@@ -114,7 +123,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         );
         sendChainlinkRequestTo(ORACLE_ADDRESS, req, ORACLE_PAYMENT);
     }
-
+    
     // It's the fourth function to be called by the oracle to store the second 32 bytes of IPFS CID
     // And then assign the StateHash and IPFS CID values at once
     function completeIPFSandStateHashProcess(
