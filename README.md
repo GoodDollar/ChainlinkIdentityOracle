@@ -12,7 +12,8 @@
  
  ## Requirements
 
-- [NPM](https://www.npmjs.com/) 
+- [NPM](https://www.npmjs.com/) and [YARN](https://yarnpkg.com/)
+
 
 ## Installation
 
@@ -44,7 +45,7 @@ You can also use a `PRIVATE_KEY` instead of a `MNEMONIC` environment variable by
 Then you can install all the dependencies
 
 ```bash
-git clone https://github.com/https://github.com/GoodDollar/ChainlinkIdentityOracle/
+git clone https://github.com/GoodDollar/ChainlinkIdentityOracle/
 cd ChainlinkIdentityOracle
 ```
 then
