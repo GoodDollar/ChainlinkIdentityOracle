@@ -3,13 +3,12 @@
 pragma solidity >0.8.0;
 
 import "hardhat/console.sol";
-//import "@gooddollar/goodprotocolv2/contracts/utils/DAOUpgradeableContract.sol";
+import "@gooddollar/goodprotocolv2/contracts/utils/DAOUpgradeableContract.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
-//contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
-contract IdentityOracle is ChainlinkClient, Ownable {
+contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
 
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
