@@ -9,7 +9,7 @@
     ],
     "tasks": [
       {
-        "type": "gooddollar-adapter",
+        "type": "gooddollar-bridge",
         "confirmations": null,
         "params": {
           "endpoint": "ipfscid2"
