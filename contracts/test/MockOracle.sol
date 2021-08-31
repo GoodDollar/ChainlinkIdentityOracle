@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.6;
+pragma solidity ^0.8.0;
 
-import "@chainlink/contracts/src/v0.6/LinkTokenReceiver.sol";
-import "@chainlink/contracts/src/v0.6/interfaces/ChainlinkRequestInterface.sol";
-import "@chainlink/contracts/src/v0.6/interfaces/LinkTokenInterface.sol";
-import "@chainlink/contracts/src/v0.6/vendor/SafeMathChainlink.sol";
+import "./LinkTokenReceiver.sol";
+import "./interfaces/ChainlinkRequestInterface.sol";
+import "./interfaces/LinkTokenInterface.sol";
+import "./vendor/SafeMathChainlink.sol";
 
 /**
  * @title The Chainlink Mock Oracle contract
@@ -82,7 +82,7 @@ contract MockOracle is ChainlinkRequestInterface, LinkTokenReceiver {
     bytes32 requestId = keccak256(abi.encodePacked(_sender, _nonce));
     require(commitments[requestId].callbackAddr == address(0), "Must use a unique ID");
     // solhint-disable-next-line not-rely-on-time
-    uint256 expiration = now.add(EXPIRY_TIME);
+    uint256 expiration = block.timestamp.add(EXPIRY_TIME);
 
     commitments[requestId] = Request(
         _callbackAddress,
@@ -148,7 +148,7 @@ contract MockOracle is ChainlinkRequestInterface, LinkTokenReceiver {
   {
     require(commitments[_requestId].callbackAddr != address(0), "Must use a unique ID");
     // solhint-disable-next-line not-rely-on-time
-    require(_expiration <= now, "Request is not expired");
+    require(_expiration <= block.timestamp, "Request is not expired");
 
     delete commitments[_requestId];
     emit CancelOracleRequest(_requestId);
