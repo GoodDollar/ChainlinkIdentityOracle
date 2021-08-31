@@ -57,29 +57,6 @@ skip.if(!developmentChains.includes(network.name)).
 
       expect(result).to.equal(true);
     });
-    it('Checking if prove store the result using isValidProof function ...', async function () {
-
-      const proof = [
-        '0x7bc8520406917b1df974038b71fdf950d153eb984f8865ee1eed44ba48aa0d75',
-        '0x553efbe26bb9edad753c89e3944df2c0db74e14167021adcbfe59393ba331e16'
-      ];
-      let address = '0x5Cc89FC5890795aAb4837e29b54B681dA1aD8843';
-      const lastAuthenticated = 1596045795;
-
-      var proveTx = await identityOracle.prove(address, lastAuthenticated, proof, { gasLimit: 200000 });
-
-      var receipt = await proveTx.wait();
-      let proofResult = receipt.events.pop();
-
-      expect(proofResult.event).to.equal('ProofResult');
-      expect(proofResult.eventSignature).to.equal('ProofResult(bool)');
-
-      let result = proofResult.args[0];
-
-      expect(result).to.equal(true);
-
-      expect(await identityOracle.isValidProof(address, lastAuthenticated, proof)).to.equal(true);
-    });
     it("Checking isWhitelisted with several values ...", async function () {
 
       expect(await identityOracle.stateHash()).to.equal("0x0e8d3a960d058403c71b98a920e76d23683589ded04b08d877f3da31dcca18c6");
