@@ -4,12 +4,12 @@ This repository contains the source for Chainlink external adapters. Each adapte
 
 ## Requirements
 
-- Yarn
+- NPM & Yarn
 
 ## Install
 
 ```bash
-yarn
+npm install 
 ```
 
 Installs packages for all workspaces.
@@ -22,44 +22,31 @@ yarn setup
 
 Runs the setup step for all adapters. Typically this step just compiles TypeScript, but may involve other tasks.
 
-## Test
-
-In order to test adapters locally, you may need to set an `$API_KEY` environment variable for the given API.
+## Start to test gooddollar-identity-adapter
 
 ```bash
-cd $adapter
-yarn test
+cd gooddollar-identity-adapter
+yarn start
 ```
+#### Output
+```bash
+yarn run v1.22.5
+$ yarn server:dist
+$ node -e 'require("./dist/index.js").server()'
+{"message":"Listening on port 8080!","level":"info","instanceId":"9146faed-71b0-4541-bea0-68c59624226e","timestamp":"2021-08-27T21:47:41.813Z"}
+``` 
+## Testing the adapter
 
-## Create a new adapter
-
-Run the command below to have the [example](./example) directory cloned using the name you provide for \$adapter:
+Open a new terminal an execute the follow
 
 ```bash
-make new adapter=my-adapter-name
+curl -X POST -H "content-type:application/json" "localhost:8080" --data '{ "id": 0, "data": { "endpoint" : "statehash" } }'
 ```
 
-_If on a Mac, this requires `gnu-sed` to be installed and set as the default for the command `sed`._
-
-### Input
-
-When flux monitor or OCR jobs post to external adapters, the request body looks as follows:
-
-```json
-{
-  "id": "2cae6a10e5184aa685c3428964b02418",
-  "data": { "from": "ETH", "to": "USD" },
-  "meta": {
-    "latestAnswer": 39307000000,
-    "updatedAt": 1616448197,
-  }
-}
+#### Example output
+```bash
+{"jobRunID":"1","result":"488574600417955006e4f574919ce5034f0f428d3649456de3e3dfa8f93f6403","statusCode":200,"data":{"result":"488574600417955006e4f574919ce5034f0f428d3649456de3e3dfa8f93f6403"}}
 ```
-
-The `updatedAt` field is a unix timestamp representing when the `latestAnswer` was computed. 
-
-Optionally `data` parameters can also be passed via a query string like: `{ENDPOINT}?from=ETH&to=USD`
-
 ## Docker
 
 To build a Docker container for a specific `$adapter`, use the following example:
