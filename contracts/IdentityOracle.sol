@@ -9,32 +9,30 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgrad
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
-
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
     bytes32 public stateHash; // current state hash
-    string  public stateDataIPFS; // ipfs cid
+    string public stateDataIPFS; // ipfs cid
 
     bytes32 public tmpStateHash; // this is used for the first of three steps of oracle updating process
     bytes32 public tmpStateDataIPFS1; // this is used for the second of three steps of oracle updating process
     bytes32 public tmpStateDataIPFS2; // this is used for the second of three steps of oracle updating process
 
     uint256 private constant ORACLE_PAYMENT = 10**17;
-    string  private JOBID_GET_STATE_HASH = "f8336d36386945059b6039d9f407c827";
-    string  private JOBID_GET_IPFS_CID1 = "6fdec1f580574313a73fcd3224528711";
-    string  private JOBID_GET_IPFS_CID2 = "c6910a08a1594b82aa217db00aa0a486";
-    address private constant ORACLE_ADDRESS = 0x7bccD524Fd2Cc264Dd80E4589B4B3409fb61daC0;
+    string private JOBID_GET_STATE_HASH = "9088a872ef6a4c9b98234ac8db3ec4c0";
+    string private JOBID_GET_IPFS_CID1 = "abbcfd8e16c048718e8a030daa2e489b";
+    string private JOBID_GET_IPFS_CID2 = "be8deaa69e5b4dbea17f20fbc364023b";
+    address private constant ORACLE_ADDRESS =
+        0x7bccD524Fd2Cc264Dd80E4589B4B3409fb61daC0;
 
     uint256 public lastStartUpdProcInvoked;
 
     struct WhitelistProofState {
-        bytes32[] proof;
         uint256 lastProofDate;
         uint256 lastAuthenticatedDate;
     }
 
     mapping(address => WhitelistProofState) private whitelistProofState;
-    address [] private whitelistProofStateAddresses; // It's used to store of the whitelistProofState keys as helper to be able to iterate all items.
     event ProofResult(bool);
     mapping(address => bool) private oracleState; // Store oracle address ad if isAllowed
 
@@ -52,7 +50,10 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     }
 
     function _onlyOracle() internal view {
-        require(oracleState[msg.sender], "only allowed oracle can call this method");
+        require(
+            oracleState[msg.sender],
+            "only allowed oracle can call this method"
+        );
     }
 
     function _onlyAvatarTmp() internal view {
@@ -122,7 +123,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         );
         sendChainlinkRequestTo(ORACLE_ADDRESS, req, ORACLE_PAYMENT);
     }
-    
+
     // It's the fourth function to be called by the oracle to store the second 32 bytes of IPFS CID
     // And then assign the StateHash and IPFS CID values at once
     function completeIPFSandStateHashProcess(
@@ -151,24 +152,18 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         bytes32[] memory _proof
     ) public {
         bool result = false;
-        if (isValidProof(_address, _lastAuthenticated, _proof)) {
-            result = true;
-        } else {
-            ( , result) = _checkMerkleProof(
-                _address,
-                _lastAuthenticated,
-                stateHash,
-                _proof
-            );
-            //update address state in smart contract. also update address lastProofDate (required by isWhitelisted below).
-            if (result) {
-                WhitelistProofState memory state;
-                state.proof = _proof;
-                state.lastProofDate = block.timestamp;
-                state.lastAuthenticatedDate = _lastAuthenticated;
-                whitelistProofState[_address] = state;
-                whitelistProofStateAddresses.push(_address);
-            }
+        (, result) = _checkMerkleProof(
+            _address,
+            _lastAuthenticated,
+            stateHash,
+            _proof
+        );
+        //update address state in smart contract. also update address lastProofDate (required by isWhitelisted below).
+        if (result) {
+            WhitelistProofState memory state;
+            state.lastProofDate = block.timestamp;
+            state.lastAuthenticatedDate = _lastAuthenticated;
+            whitelistProofState[_address] = state;
         }
         emit ProofResult(result);
     }
@@ -181,27 +176,6 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     ) internal pure returns (bytes32 leafHash, bool isProofValid) {
         leafHash = keccak256(abi.encode(_address, _lastAuthenticated));
         isProofValid = MerkleProofUpgradeable.verify(_proof, _root, leafHash);
-    }
-
-    //- used by prove but should also be available publically
-    function isValidProof(
-        address _address,
-        uint256 _lastAuthenticated,
-        bytes32[] memory _proof
-    ) public view returns (bool) {
-        // check in history proofs
-        bool result = true;
-        WhitelistProofState memory state = whitelistProofState[_address];
-        if (state.lastAuthenticatedDate != _lastAuthenticated) {
-            result = false;
-        } else {
-            for (uint256 i = 0; result && (i < state.proof.length); i++) {
-                if (state.proof[i] != _proof[i]) {
-                    result = false;
-                }
-            }
-        }
-        return result;
     }
 
     //- returns true if address is whitelisted under maxProofAge and maxAuthentication age restrictions.
@@ -244,7 +218,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         JOBID_GET_STATE_HASH = _jobid;
     }
 
-    function getJobIDIPFS1() public view returns (string memory){
+    function getJobIDIPFS1() public view returns (string memory) {
         _onlyAvatarTmp();
         return JOBID_GET_IPFS_CID1;
     }
@@ -258,6 +232,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         _onlyAvatarTmp();
         return JOBID_GET_STATE_HASH;
     }
+
     function withdrawLink() public onlyOwner {
         LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
         require(
