@@ -1,0 +1,1 @@
+declare module 'merkle-tree-solidity';
