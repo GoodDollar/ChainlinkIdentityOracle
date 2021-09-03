@@ -3,6 +3,7 @@ import procLastAuthenticated from './procLastAuthenticated'
 import saveToFile from './utils'
 import { ethers } from 'ethers'
 import { identity as identityContractABI } from './identityContractABI.json'
+import { createMerkleHash, getTreeData, postTreeData } from './../sdk/identityOracleSDK'
 
 const url = 'https://rpc.fuse.io/'
 const provider: ethers.providers.JsonRpcProvider = new ethers.providers.JsonRpcProvider(url)
@@ -75,7 +76,7 @@ async function genWhitelist() {
   //await saveToFile({ _filename: 'whitelistedWBlock.json', _content: whitelisted })
 
   // It purge the whitelisted, removing addresses from WhitelistedRemoved event
-  const lAuthParallel = 1000
+  const lAuthParallel = 500
 
   await procLastAuthenticated(contract, whitelisted, whitelistedWLastAuthenticated, lAuthParallel)
 
@@ -83,6 +84,9 @@ async function genWhitelist() {
     _filename: 'whitelistedWlastAuthenticated.json',
     _content: whitelistedWLastAuthenticated,
   })
+
+  await createMerkleHash()
+  console.log('ipfs cid: ' + (await postTreeData()))
 }
 
 export { genWhitelist }

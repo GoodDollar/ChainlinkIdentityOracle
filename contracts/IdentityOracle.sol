@@ -14,17 +14,13 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     bytes32 public stateHash; // current state hash
     string public stateDataIPFS; // ipfs cid
 
-    bytes32 public tmpStateHash; // this is used for the first of three steps of oracle updating process
-    bytes32 public tmpStateDataIPFS1; // this is used for the second of three steps of oracle updating process
-    bytes32 public tmpStateDataIPFS2; // this is used for the second of three steps of oracle updating process
-
-    uint256 private constant ORACLE_PAYMENT = 10**17;
-    string private JOBID_GET_STATE_HASH = "9088a872ef6a4c9b98234ac8db3ec4c0";
-    string private JOBID_GET_IPFS_CID1 = "abbcfd8e16c048718e8a030daa2e489b";
-    string private JOBID_GET_IPFS_CID2 = "be8deaa69e5b4dbea17f20fbc364023b";
+    uint256 private constant ORACLE_PAYMENT = 10**16;
+    string  private JOBID_GET_STATE_HASH_IPFSCID = "b40e532d1b774417be3f460ea47bcb18";
     address private constant ORACLE_ADDRESS =
-        0x7bccD524Fd2Cc264Dd80E4589B4B3409fb61daC0;
-
+        0x4f4202CCAf8999Cf86e02cB9324B909aE0Fe1E04;
+    address private constant CHAINLINK_NODE_ADDRESS =
+        0x8f662fb14f7358c2BAeb9b5DdA4fE40F3fc65018;
+    
     uint256 public lastStartUpdProcInvoked;
 
     struct WhitelistProofState {
@@ -38,14 +34,15 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
 
     constructor(address _link) Ownable() {
         if (_link == address(0)) {
-            setPublicChainlinkToken();
+            //setPublicChainlinkToken();
+            setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088);  // It's Link address of Kovan
         } else {
             setChainlinkToken(_link);
         }
-        //setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088);  // It's Link address of Kovan
-
+        setChainlinkOracle(ORACLE_ADDRESS);
         dao_avatar = msg.sender;
         oracleState[ORACLE_ADDRESS] = true;
+        oracleState[CHAINLINK_NODE_ADDRESS] = true;
         oracleState[msg.sender] = true;
     }
 
@@ -83,66 +80,27 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         _onlyOracle();
         lastStartUpdProcInvoked = block.timestamp;
         Chainlink.Request memory req = buildChainlinkRequest(
-            stringToBytes32(JOBID_GET_STATE_HASH),
+            stringToBytes32(JOBID_GET_STATE_HASH_IPFSCID),
             address(this),
-            this.setTmpStateHash.selector
+            this.setFulfillStateHashIPFSCID.selector
         );
-        sendChainlinkRequestTo(ORACLE_ADDRESS, req, ORACLE_PAYMENT);
+        requestOracleData(req, ORACLE_PAYMENT);
     }
 
     // It's the second function to be called by the oracle to store the tmpStateHash value
-    function setTmpStateHash(bytes32 _requestId, bytes32 _statehash)
+    function setFulfillStateHashIPFSCID(bytes32 _requestId, bytes memory _statehashipfscid)
         public
         recordChainlinkFulfillment(_requestId)
     // This function is called only oracle
     //- only approved oracles can set the new merkle state plus link to ipfs data used to create state
     {
         _onlyOracle();
-        tmpStateHash = _statehash;
-        Chainlink.Request memory req = buildChainlinkRequest(
-            stringToBytes32(JOBID_GET_IPFS_CID1),
-            address(this),
-            this.setTmpStateDataIPFS1.selector
-        );
-        sendChainlinkRequestTo(ORACLE_ADDRESS, req, ORACLE_PAYMENT);
+        (bytes32 _statehash, string memory _ipfscid) = abi.decode(_statehashipfscid,(bytes32,string));
+        stateHash = _statehash;
+        stateDataIPFS = _ipfscid;
     }
 
-    // It's the third function to be called by the oracle to store the first 32 bytes of IPFS CID
-    function setTmpStateDataIPFS1(bytes32 _requestId, bytes32 _ipfscid1)
-        public
-        recordChainlinkFulfillment(_requestId)
-    // This function is called only oracle
-    //- only approved oracles can set the new merkle state plus link to ipfs data used to create state
-    {
-        _onlyOracle();
-        tmpStateDataIPFS1 = _ipfscid1;
-        Chainlink.Request memory req = buildChainlinkRequest(
-            stringToBytes32(JOBID_GET_IPFS_CID2),
-            address(this),
-            this.completeIPFSandStateHashProcess.selector
-        );
-        sendChainlinkRequestTo(ORACLE_ADDRESS, req, ORACLE_PAYMENT);
-    }
-
-    // It's the fourth function to be called by the oracle to store the second 32 bytes of IPFS CID
-    // And then assign the StateHash and IPFS CID values at once
-    function completeIPFSandStateHashProcess(
-        bytes32 _requestId,
-        bytes32 _ipfscid2
-    )
-        public
-        recordChainlinkFulfillment(_requestId)
-    // This function is called only oracle
-    //- only approved oracles can set the new merkle state plus link to ipfs data used to create state
-    {
-        _onlyOracle();
-        tmpStateDataIPFS2 = _ipfscid2;
-        setState(
-            tmpStateHash,
-            convIPFSCIDinBytes32ToStr(tmpStateDataIPFS1, tmpStateDataIPFS2)
-        );
-    }
-
+    
     //- prove that pair publicAddress, lastAuthenticated exists in current state.
     //update address state in smart contract. also update address lastProofDate (required by isWhitelisted below).
     //Proof can be generated by "sdk" defined in previous step.
@@ -202,35 +160,15 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         }
         return result;
     }
-
-    function setJobIDIPFS1(string memory _jobid) public {
+    
+    function setJobIDStateHashIPFSCID(string memory _jobid) public {
         _onlyAvatarTmp();
-        JOBID_GET_IPFS_CID1 = _jobid;
+        JOBID_GET_STATE_HASH_IPFSCID = _jobid;
     }
-
-    function setJobIDIPFS2(string memory _jobid) public {
+    
+    function getJobIDStateHashIPFSCID() public view returns (string memory) {
         _onlyAvatarTmp();
-        JOBID_GET_IPFS_CID2 = _jobid;
-    }
-
-    function setJobIDStateHash(string memory _jobid) public {
-        _onlyAvatarTmp();
-        JOBID_GET_STATE_HASH = _jobid;
-    }
-
-    function getJobIDIPFS1() public view returns (string memory) {
-        _onlyAvatarTmp();
-        return JOBID_GET_IPFS_CID1;
-    }
-
-    function getJobIDIPFS2() public view returns (string memory) {
-        _onlyAvatarTmp();
-        return JOBID_GET_IPFS_CID2;
-    }
-
-    function getJobIDStateHash() public view returns (string memory) {
-        _onlyAvatarTmp();
-        return JOBID_GET_STATE_HASH;
+        return JOBID_GET_STATE_HASH_IPFSCID;
     }
 
     function withdrawLink() public onlyOwner {
@@ -244,27 +182,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     function getChainlinkToken() public view returns (address) {
         return chainlinkTokenAddress();
     }
-
-    function convIPFSCIDinBytes32ToStr(bytes32 _value1, bytes32 _value2)
-        private
-        pure
-        returns (string memory)
-    {
-        bytes memory bytesArray = new bytes(59);
-        uint256 mainindex = 0;
-
-        for (uint256 i = 5; i < 32; i++) {
-            bytesArray[mainindex] = _value1[i];
-            mainindex++;
-        }
-
-        for (uint256 i; i < 32; i++) {
-            bytesArray[mainindex] = _value2[i];
-            mainindex++;
-        }
-        return string(bytesArray);
-    }
-
+   
     function stringToBytes32(string memory source)
         private
         pure

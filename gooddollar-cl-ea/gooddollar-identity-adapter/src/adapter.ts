@@ -1,7 +1,7 @@
 import { Requester, Validator, AdapterError } from '@chainlink/external-adapter'
 import { Config, ExecuteWithConfig, ExecuteFactory } from '@chainlink/types'
 import { makeConfig, DEFAULT_ENDPOINT } from './config'
-import { ipfscid1, ipfscid2, statehash } from './endpoint'
+import { genstatehashipfscid, getstatehashipfscid } from './endpoint'
 
 const inputParams = {
   endpoint: false,
@@ -19,14 +19,11 @@ export const execute: ExecuteWithConfig<Config> = async (request, config) => {
   console.log(endpoint)
 
   switch (endpoint.toLowerCase()) {
-    case ipfscid1.NAME: {
-      return await ipfscid1.execute(request, config)
+    case genstatehashipfscid.NAME: {
+      return await genstatehashipfscid.execute(request, config)
     }
-    case ipfscid2.NAME: {
-      return await ipfscid2.execute(request, config)
-    }
-    case statehash.NAME: {
-      return await statehash.execute(request, config)
+    case getstatehashipfscid.NAME: {
+      return await getstatehashipfscid.execute(request, config)
     }
     default: {
       throw new AdapterError({

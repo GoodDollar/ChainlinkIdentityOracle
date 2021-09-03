@@ -38,6 +38,7 @@ function createMerkleHash() {
   const merkleTree = new MerkleTree(elements)
   const merkleRoot = merkleTree.getRoot().toString('hex')
   fs.writeFileSync('whitelistedTree.json', JSON.stringify({ treeData, merkleRoot }))
+  fs.writeFileSync('merkleRoot.txt', JSON.stringify(merkleRoot))
   return merkleRoot
 }
 
