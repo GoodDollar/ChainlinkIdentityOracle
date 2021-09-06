@@ -12,13 +12,13 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
     bytes32 public stateHash; // current state hash
-    string public stateDataIPFS; // ipfs cid
+    string  public stateDataIPFS; // ipfs cid
 
     uint256 private constant ORACLE_PAYMENT = 10**16;
     string  private JOBID_GET_STATE_HASH_IPFSCID = "b40e532d1b774417be3f460ea47bcb18";
-    address private constant ORACLE_ADDRESS =
+    address private ORACLE_ADDRESS =
         0x4f4202CCAf8999Cf86e02cB9324B909aE0Fe1E04;
-    address private constant CHAINLINK_NODE_ADDRESS =
+    address private CHAINLINK_NODE_ADDRESS =
         0x8f662fb14f7358c2BAeb9b5DdA4fE40F3fc65018;
     
     uint256 public lastStartUpdProcInvoked;
@@ -161,16 +161,26 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         return result;
     }
     
-    function setJobIDStateHashIPFSCID(string memory _jobid) public {
-        _onlyAvatarTmp();
-        JOBID_GET_STATE_HASH_IPFSCID = _jobid;
-    }
-    
     function getJobIDStateHashIPFSCID() public view returns (string memory) {
         _onlyAvatarTmp();
         return JOBID_GET_STATE_HASH_IPFSCID;
     }
 
+    function setJobIDStateHashIPFSCID(string memory _jobid) public {
+        _onlyAvatarTmp();
+        JOBID_GET_STATE_HASH_IPFSCID = _jobid;
+    }
+    
+    function getCLNodeAdderss() public view returns (address) {
+        _onlyAvatarTmp();
+        return CHAINLINK_NODE_ADDRESS;
+    }
+
+    function setCLNodeAdderss(address _clnodeaddress) public {
+        _onlyAvatarTmp();
+        CHAINLINK_NODE_ADDRESS = _clnodeaddress;
+    }
+        
     function withdrawLink() public onlyOwner {
         LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
         require(
