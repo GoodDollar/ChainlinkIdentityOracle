@@ -3,7 +3,7 @@
 pragma solidity >0.8.0;
 
 import "hardhat/console.sol";
-import "@gooddollar/goodprotocolv2/contracts/utils/DAOUpgradeableContract.sol";
+import "@gooddollar/goodprotocol/contracts/utils/DAOUpgradeableContract.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
@@ -15,7 +15,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     string  public stateDataIPFS; // ipfs cid
 
     uint256 private constant ORACLE_PAYMENT = 10**16;
-    string  private JOBID_GET_STATE_HASH_IPFSCID = "b40e532d1b774417be3f460ea47bcb18";
+    string  private JOBID_GET_STATE_HASH_IPFSCID = "a36cda0a7636428db24b1e61a5a36976";
     address private ORACLE_ADDRESS =
         0x4f4202CCAf8999Cf86e02cB9324B909aE0Fe1E04;
     address private CHAINLINK_NODE_ADDRESS =
