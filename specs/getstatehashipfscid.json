@@ -1,0 +1,32 @@
+{
+    "name": "getstatehashipfscid",
+    "initiators": [
+      {
+        "type": "runlog",
+        "params": {
+          "address": "ORACLE_CONTRACT_ADDRESS"
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "type": "gooddollar-bridge",
+        "params": {
+          "endpoint": "getstatehashipfscid"
+        }
+      },
+      {
+        "type": "resultcollect"
+      },
+      {
+        "type": "ethtx",
+        "confirmations": 1,
+        "params": {
+          "abiEncoding": [
+            "bytes32",
+            "bytes"
+          ]
+        }
+      }
+    ]
+  }

@@ -1,0 +1,21 @@
+{
+    "name": "startIPFSandStateHashProcess",
+    "initiators": [
+        {
+            "type": "cron",
+            "params": {
+                "schedule": "CRON_TZ=UTC  40 20 * * *"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "type": "ethtx",
+            "confirmations": 0,
+            "params": {
+                "address": "IDENTITY_ORACLE_CONTRACT_ADDRESS",
+                "functionSelector": "startIPFSandStateHashProcess()"
+            }
+        }
+    ]
+}
