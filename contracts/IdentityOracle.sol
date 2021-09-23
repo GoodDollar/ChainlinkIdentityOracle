@@ -3,12 +3,11 @@
 pragma solidity >0.8.0;
 
 import "hardhat/console.sol";
-import "@gooddollar/goodprotocolv2/contracts/utils/DAOUpgradeableContract.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
-contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
+contract IdentityOracle is ChainlinkClient, Ownable {
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
     bytes32 public stateHash; // current state hash
@@ -51,7 +50,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
         );
     }
 
-    function _onlyAvatarTmp() internal view {
+    function _onlyAvatar() internal view {
         require(
             address(dao_avatar) == msg.sender,
             "only avatar can call this method"
@@ -60,7 +59,7 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
 
     //- only the DAO can approve/remove an oracle. onlyAvatar is defined in DAOUpgradeableContract
     function setOracle(address _oracle, bool _isAllowed) public {
-        _onlyAvatarTmp();
+        _onlyAvatar();
         oracleState[_oracle] = _isAllowed;
     }
 
@@ -150,12 +149,12 @@ contract IdentityOracle is DAOUpgradeableContract, ChainlinkClient, Ownable {
     }
   
     function setStateHashIPFSCIDJobID(string memory _jobid) public {
-        _onlyAvatarTmp();
+        _onlyAvatar();
         GET_STATE_HASH_IPFSCID_JOBID = stringToBytes32(_jobid);
     }
 
     function setCLNodeAdderss(address _clnodeaddress) public {
-        _onlyAvatarTmp();
+        _onlyAvatar();
         CHAINLINK_NODE_ADDRESS = _clnodeaddress;
     }
 
