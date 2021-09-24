@@ -20,14 +20,6 @@ skip.if(!developmentChains.includes(network.name)).
 
       const IdentityOracle = await deployments.get('IdentityOracle')
       identityOracle = await ethers.getContractAt('IdentityOracle', IdentityOracle.address)
-      /*const IdentityOracle = await hre.ethers.getContractFactory("IdentityOracle");
-      identityOracle = await IdentityOracle.deploy();
-      await identityOracle.deployed();*/
-
-      const setStateTx = await identityOracle.setState('0x0e8d3a960d058403c71b98a920e76d23683589ded04b08d877f3da31dcca18c6',
-        'bafkreibpjfb52jogprvsjydbyncqbazpcd376r46x6znlzknhzkqkb5pba');
-
-      await setStateTx.wait();
     });
 
     it("Testing setter and getter function to stateHash and stateDataIPFS ...", async function () {
@@ -98,5 +90,4 @@ skip.if(!developmentChains.includes(network.name)).
       expect(await identityOracle.isWhitelisted(address, 10, 10)).to.equal(false, 'Checking isWhitelisted(\'0xf96dADc6D71113F6500e97590760C924dA1eF70e\', 10, 10) FAIL');
 
     });
-
   });
