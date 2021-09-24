@@ -5,20 +5,15 @@ pragma solidity >0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
-import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
-contract IdentityOracle is ChainlinkClient, Ownable {
+contract IdentityOracle is Ownable {
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
-    bytes32 public stateHash; // current state hash
-    string  public stateDataIPFS; // ipfs cid
+    bytes32 public stateHash = 0x0e8d3a960d058403c71b98a920e76d23683589ded04b08d877f3da31dcca18c6; // current state hash
+    string  public stateDataIPFS = 'bafkreibpjfb52jogprvsjydbyncqbazpcd376r46x6znlzknhzkqkb5pba'; // ipfs cid
 
-    uint256 public constant ORACLE_PAYMENT = 10**16;
-    bytes32 public GET_STATE_HASH_IPFSCID_JOBID =  stringToBytes32("a36cda0a7636428db24b1e61a5a369766"); //"a36cda0a7636428db24b1e61a5a36976";
-    address public ORACLE_ADDRESS =
-        0x4f4202CCAf8999Cf86e02cB9324B909aE0Fe1E04;
     address public CHAINLINK_NODE_ADDRESS =
-        0x8f662fb14f7358c2BAeb9b5DdA4fE40F3fc65018;
+        0x8CC93F854df3d9815331Cd178f496d4Db1D677A3;
 
     uint256 public lastStartUpdProcInvoked;
 
@@ -32,13 +27,7 @@ contract IdentityOracle is ChainlinkClient, Ownable {
     mapping(address => bool) private oracleState; // Store oracle address ad if isAllowed
 
     constructor(address _link) Ownable() {
-        if (_link == address(0)) {
-            setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088);  // It's Link address of Kovan
-        } else {
-            setChainlinkToken(_link);
-        }
         dao_avatar = msg.sender;
-        oracleState[ORACLE_ADDRESS] = true;
         oracleState[CHAINLINK_NODE_ADDRESS] = true;
         oracleState[msg.sender] = true;
     }
@@ -63,22 +52,9 @@ contract IdentityOracle is ChainlinkClient, Ownable {
         oracleState[_oracle] = _isAllowed;
     }
 
-    // It's is the first function to be called by the oracle to update IPFS CID and StatetHash
-    function startIPFSandStateHashProcess() public {
-        _onlyOracle();
-        lastStartUpdProcInvoked = block.timestamp;
-        Chainlink.Request memory req = buildChainlinkRequest(
-            GET_STATE_HASH_IPFSCID_JOBID,
-            address(this),
-            this.setFulfillStateHashIPFSCID.selector
-        );
-        requestOracleDataFrom(address(ORACLE_ADDRESS), req, ORACLE_PAYMENT);
-    }
-
-    // It's the second function to be called by the oracle to store the tmpStateHash value
-    function setFulfillStateHashIPFSCID(bytes32 _requestId, bytes memory _statehashipfscid)
+    // It's the second function to be called by the oracle to store the StateHash value and IPFSCID
+    function setFulfillStateHashIPFSCID(bytes memory _statehashipfscid)
         public
-        recordChainlinkFulfillment(_requestId)
     // This function is called only oracle
     //- only approved oracles can set the new merkle state plus link to ipfs data used to create state
     {
@@ -148,37 +124,9 @@ contract IdentityOracle is ChainlinkClient, Ownable {
         return result;
     }
   
-    function setStateHashIPFSCIDJobID(string memory _jobid) public {
-        _onlyAvatar();
-        GET_STATE_HASH_IPFSCID_JOBID = stringToBytes32(_jobid);
-    }
-
     function setCLNodeAdderss(address _clnodeaddress) public {
         _onlyAvatar();
         CHAINLINK_NODE_ADDRESS = _clnodeaddress;
     }
 
-    function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
-        require(
-            link.transfer(msg.sender, link.balanceOf(address(this))),
-            "Unable to transfer"
-        );
-    }
-
-    function stringToBytes32(string memory source)
-        private
-        pure
-        returns (bytes32 result)
-    {
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-
-        assembly {
-            // solhint-disable-line no-inline-assembly
-            result := mload(add(source, 32))
-        }
-    }
 }
