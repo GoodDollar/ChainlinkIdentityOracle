@@ -4,12 +4,12 @@ This repository contains the source for Chainlink external adapters. Each adapte
 
 ## Requirements
 
-- NPM & Yarn
+- Yarn
 
 ## Install
 
 ```bash
-npm install 
+yarn
 ```
 
 Installs packages for all workspaces.
