@@ -24,53 +24,15 @@ Create the jobs
 This job is started by cron to generates the Addresses whitelist, upload it to IPFS, and creates the merkle hash, finally it saves this two parametes in filesystem. It takes more than one hour for about 230000 Addresses.
 
 ```
-    {
-      "name": "genstatehashipfscid",
-      "initiators": [
-        {
-          "type": "cron",
-          "params": {
-            "schedule": "CRON_TZ=UTC 40 17 * * *"
-          }
-        }
-      ],
-      "tasks": [
-        {
-          "type": "gooddollar-bridge",
-          "params": {
-            "endpoint": "genstatehashipfscid"
-          }
-        }
-      ]
-    }
-```
-
-### JOB: startIPFSandStateHashProcess
-
-This is a cron based job and starts the process of data request and fulfilling
-
-```
-{
-    "name": "startIPFSandStateHashProcess",
-    "initiators": [
-        {
-            "type": "cron",
-            "params": {
-                "schedule": "CRON_TZ=UTC  40 20 * * *"
-            }
-        }
-    ],
-    "tasks": [
-        {
-            "type": "ethtx",
-            "confirmations": 0,
-            "params": {
-                "address": "IDENTITY_ORACLE_CONTRACT_ADDRESS",
-                "functionSelector": "startIPFSandStateHashProcess()"
-            }
-        }
-    ]
-}
+type = "cron"
+schemaVersion = 1
+name = "genstatehashipfscid"
+schedule = "CRON_TZ=UTC 0 30 19 * * *"
+observationSource = """
+    gen_statehash_ipfscid [type=bridge name="gooddollar-bridge" requestData="{\\"data\\": {\\"endpoint\\":\\"genstatehashipfscid\\"}}"]
+                
+    gen_statehash_ipfsci
+"""
 ```
 
 ### JOB: getstatehashipfscid
@@ -78,38 +40,22 @@ This is a cron based job and starts the process of data request and fulfilling
 This job is a runlog one that return the external adapter long response values to the IdentityOracle smartcontract.
 
 ```
-{
-  "name": "getstatehashipfscid",
-  "initiators": [
-    {
-      "type": "runlog",
-      "params": {
-        "address": "ORACLE_CONTRACT_ADDRESS"
-      }
-    }
-  ],
-  "tasks": [
-    {
-      "type": "gooddollar-bridge",
-      "params": {
-        "endpoint": "getstatehashipfscid"
-      }
-    },
-    {
-      "type": "resultcollect"
-    },
-    { 
-      "type": "ethtx",
-      "confirmations": 1,
-      "params": {
-        "abiEncoding": [
-          "bytes32",
-          "bytes"
-        ]
-      }
-    }
-  ]
-}
+type = "cron"
+schemaVersion = 1
+name = "getstatehashipfscid"
+schedule = "CRON_TZ=UTC 0 30 21 * * *"
+observationSource = """
+    fetch_hash [type=bridge name="gooddollar-bridge" requestData="{\\"data\\": {\\"endpoint\\":\\"getstatehashipfscid\\"}}"]
+    json_parser [type="jsonparse"
+              data="$(fetch_hash)"
+              path="result"]
+    encode_tx  [type=ethabiencode
+                          abi="setFulfillStateHashIPFSCID(bytes result)" 
+                          data=<{ "result": $(json_parser) }>]
+    submit_tx [type=ethtx to="0x8CC93F854df3d9815331Cd178f496d4Db1D677A3" data="$(encode_tx)"]                     
+    
+    fetch_hash -> json_parser -> encode_tx -> submit_tx
+"""
 ```
 
 ## Involved Smart contracts
@@ -130,23 +76,21 @@ in this example it was deployed with address: 0x4f4202CCAf8999Cf86e02cB9324B909a
 To autorize the node to fulfill requests invoke the function:
 setAuthorizedSenders(["CHAINLINK_NODE_ADDRESS"])
 
-in this example it has the address: 0x8f662fb14f7358c2BAeb9b5DdA4fE40F3fc65018
+in this example it has the address: 0xEa87db1524Ae4469CD5fD0b0fa490CB8662C8CF8
 
 
 ### Identity Oracle
 
 ./contracts/IdentityOracle.sol 
 
-in this example it was deployed with address: 0x3fADdAFA3b59aA54Ab16fDEbaB7fd2cDBC2fEBc1
+in this example it was deployed with address: 0x8CC93F854df3d9815331Cd178f496d4Db1D677A3
 
 ## workflow
 
 1. Chainlink node starts the cron job genstatehashipfscid
    + It goes throught the bridge and starts the process genstatehashipfscid 
-2. Chainlink node starts the cron job startIPFSandStateHashProcess
-   + It connects to the smart contract IdentityOracle and invokes the function startIPFSandStateHashProcess()
-   + This function makes a request to the function requestOracleData of Operator Smart Contract and pass the "getstatehashipfscid" job ID.
-     + The Chainlink JOB request goes throught the bridge
+2. Chainlink node starts the cron job getstatehashipfscid job ID.
+     + The Chainlink JOB request goes through the bridge
        - Call the external adapter and it returns the merklehash and Ipfscid
        - The job responses with a bytes "long response" the merklehash concatenated with the Ipfscid 
    + Finally node responses calling the function setFulfillStateHashIPFSCID of the IdentityOracle smart contract. 
@@ -243,12 +187,6 @@ To run unit tests:
 yarn test
 ```
 
-To run integration tests:
-
-```bash
-yarn test-integration
-```
-
 ## Run
 
 The deployment output will give you the contract addresses as they are deployed. You can then use these contract addresses in conjunction with Hardhat tasks to perform operations on each contract
@@ -258,12 +196,6 @@ The IdentityOracle contract has two tasks, one to request startstartIPFSandState
 
 ```bash
 npx hardhat fund-link --contract insert-contract-address-here --network network
-```
-
-Once it's funded, you can run the request-data task. The contract parameter is mandatory, the rest are optional
-
-```bash
-npx hardhat request-data --contract insert-contract-address-here --network network
 ```
 
 Once you have successfully made a request for external data, you can see the result via the read-data task
