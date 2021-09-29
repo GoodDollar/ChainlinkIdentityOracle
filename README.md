@@ -31,7 +31,7 @@ schedule = "CRON_TZ=UTC 0 30 19 * * *"
 observationSource = """
     gen_statehash_ipfscid [type=bridge name="gooddollar-bridge" requestData="{\\"data\\": {\\"endpoint\\":\\"genstatehashipfscid\\"}}"]
                 
-    gen_statehash_ipfsci
+    gen_statehash_ipfscid
 """
 ```
 
