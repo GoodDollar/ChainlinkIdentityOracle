@@ -4,13 +4,14 @@ pragma solidity >0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
 contract IdentityOracle is Ownable {
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
-    bytes32 public stateHash = 0x0e8d3a960d058403c71b98a920e76d23683589ded04b08d877f3da31dcca18c6; // current state hash
-    string  public stateDataIPFS = 'bafkreibpjfb52jogprvsjydbyncqbazpcd376r46x6znlzknhzkqkb5pba'; // ipfs cid
+    bytes32 public stateHash =
+        0x0e8d3a960d058403c71b98a920e76d23683589ded04b08d877f3da31dcca18c6; // current state hash
+    string public stateDataIPFS =
+        "bafkreibpjfb52jogprvsjydbyncqbazpcd376r46x6znlzknhzkqkb5pba"; // ipfs cid
 
     address public CHAINLINK_NODE_ADDRESS =
         0x8CC93F854df3d9815331Cd178f496d4Db1D677A3;
@@ -23,7 +24,9 @@ contract IdentityOracle is Ownable {
     }
 
     mapping(address => WhitelistProofState) private whitelistProofState;
-    event ProofResult(bool);
+
+    event AddressWhitelisted(address addr, uint256 lastAuthenticationDate);
+
     mapping(address => bool) private oracleState; // Store oracle address ad if isAllowed
 
     constructor(address _link) Ownable() {
@@ -59,7 +62,10 @@ contract IdentityOracle is Ownable {
     //- only approved oracles can set the new merkle state plus link to ipfs data used to create state
     {
         _onlyOracle();
-        (bytes32 _statehash, string memory _ipfscid) = abi.decode(_statehashipfscid,(bytes32,string));
+        (bytes32 _statehash, string memory _ipfscid) = abi.decode(
+            _statehashipfscid,
+            (bytes32, string)
+        );
         stateHash = _statehash;
         stateDataIPFS = _ipfscid;
     }
@@ -70,33 +76,68 @@ contract IdentityOracle is Ownable {
     function prove(
         address _address,
         uint256 _lastAuthenticated,
-        bytes32[] memory _proof
+        bytes32[] memory _proof,
+        uint256 _index
     ) public {
         bool result = false;
-        (, result) = _checkMerkleProof(
-            _address,
-            _lastAuthenticated,
-            stateHash,
-            _proof
-        );
+        bytes32 leafHash = keccak256(abi.encode(_address, _lastAuthenticated));
+
+        result = checkProofOrdered(_proof, stateHash, leafHash, _index);
+
         //update address state in smart contract. also update address lastProofDate (required by isWhitelisted below).
         if (result) {
             WhitelistProofState memory state;
             state.lastProofDate = block.timestamp;
             state.lastAuthenticatedDate = _lastAuthenticated;
             whitelistProofState[_address] = state;
+            emit AddressWhitelisted(_address, _lastAuthenticated);
         }
-        emit ProofResult(result);
     }
 
-    function _checkMerkleProof(
-        address _address,
-        uint256 _lastAuthenticated,
+    // from StorJ -- https://github.com/nginnever/storj-audit-verifier/blob/master/contracts/MerkleVerifyv3.sol
+    /**
+     * @dev non sorted merkle tree proof check
+     */
+    function checkProofOrdered(
+        bytes32[] memory _proof,
         bytes32 _root,
-        bytes32[] memory _proof
-    ) internal pure returns (bytes32 leafHash, bool isProofValid) {
-        leafHash = keccak256(abi.encode(_address, _lastAuthenticated));
-        isProofValid = MerkleProofUpgradeable.verify(_proof, _root, leafHash);
+        bytes32 _hash,
+        uint256 _index
+    ) public pure returns (bool) {
+        // use the index to determine the node ordering
+        // index ranges 1 to n
+
+        bytes32 proofElement;
+        bytes32 computedHash = _hash;
+        uint256 remaining;
+
+        for (uint256 j = 0; j < _proof.length; j++) {
+            proofElement = _proof[j];
+
+            // calculate remaining elements in proof
+            remaining = _proof.length - j;
+
+            // we don't assume that the tree is padded to a power of 2
+            // if the index is odd then the proof will start with a hash at a higher
+            // layer, so we have to adjust the index to be the index at that layer
+            while (remaining > 0 && _index % 2 == 1 && _index > 2**remaining) {
+                _index = _index / 2 + 1;
+            }
+
+            if (_index % 2 == 0) {
+                computedHash = keccak256(
+                    abi.encodePacked(proofElement, computedHash)
+                );
+                _index = _index / 2;
+            } else {
+                computedHash = keccak256(
+                    abi.encodePacked(computedHash, proofElement)
+                );
+                _index = _index / 2 + 1;
+            }
+        }
+
+        return computedHash == _root;
     }
 
     //- returns true if address is whitelisted under maxProofAge and maxAuthentication age restrictions.
@@ -123,10 +164,9 @@ contract IdentityOracle is Ownable {
         }
         return result;
     }
-  
+
     function setCLNodeAdderss(address _clnodeaddress) public {
         _onlyAvatar();
         CHAINLINK_NODE_ADDRESS = _clnodeaddress;
     }
-
 }
