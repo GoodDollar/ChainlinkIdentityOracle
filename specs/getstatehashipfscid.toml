@@ -10,7 +10,7 @@ observationSource = """
     encode_tx  [type=ethabiencode
                           abi="setFulfillStateHashIPFSCID(bytes result)" 
                           data=<{ "result": $(json_parser) }>]
-    submit_tx [type=ethtx to="0x8CC93F854df3d9815331Cd178f496d4Db1D677A3" data="$(encode_tx)"]
+    submit_tx [type=ethtx to="IDENTITYORACLE_CONTRACT_ADDRESS" data="$(encode_tx)"]
 
     fetch_hash -> json_parser -> encode_tx -> submit_tx
 """
