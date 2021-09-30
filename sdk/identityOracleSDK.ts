@@ -37,7 +37,8 @@ function createMerkleHash() {
     return Buffer.from(hash.slice(2), 'hex')
   })
 
-  const merkleTree = new MerkleTree(elements)
+  //NOTICE: we do not sort elements since this is a large tree
+  const merkleTree = new MerkleTree(elements, true)
   const merkleRoot = merkleTree.getRoot().toString('hex')
   fs.writeFileSync('whitelistedTree.test.json', JSON.stringify({ treeData, merkleRoot }))
   return merkleRoot
@@ -104,16 +105,26 @@ async function createProofFromTreeData(_addr: string) {
     throw console.error('error : ' + _addr + "  doesn't exist")
   }
 
-  const elements = Object.entries(treeData as Tree).map((e) =>
-    Buffer.from(e[1].hash.slice(2), 'hex'),
-  )
-  const merkleTree = new MerkleTree(elements)
-  const proof = merkleTree
-    .getProof(Buffer.from(treeData[_addr].hash.slice(2), 'hex'))
-    .map((_: { toString: (arg0: string) => string }) => '0x' + _.toString('hex'))
 
-  //console.log({ proof, [_addr]: treeData[_addr] });
-  return proof
+
+  let entries = Object.entries(treeData as Tree);
+  let elements = entries.map(e => Buffer.from(e[1].hash.slice(2), "hex"));
+
+  console.log("creating merkletree...", elements.length);
+
+  //NOTICE: tree not sorted
+  const merkleTree = new MerkleTree(elements, true);
+
+  const calcMerkleRoot = merkleTree.getRoot().toString("hex");
+
+  const addrData = treeData[addr];
+  const proofFor = Buffer.from(addrData.hash.slice(2), "hex");
+
+  const proof = merkleTree.getProof(proofFor);
+  const proofIndex = entries.findIndex(_ => _[1].hash === addrData.hash) + 1;
+
+
+  return { proof, proofIndex }
 }
 
 export { createMerkleHash, postTreeData, createProofFromTreeData, getTreeData }

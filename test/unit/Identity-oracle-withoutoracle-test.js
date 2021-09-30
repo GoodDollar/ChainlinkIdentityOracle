@@ -34,20 +34,21 @@ skip.if(!developmentChains.includes(network.name)).
         '0x7bc8520406917b1df974038b71fdf950d153eb984f8865ee1eed44ba48aa0d75',
         '0x553efbe26bb9edad753c89e3944df2c0db74e14167021adcbfe59393ba331e16'
       ];
+      const addrIndexInTree = 1 //TODO: fix this
       let address = '0x5Cc89FC5890795aAb4837e29b54B681dA1aD8843';
       const lastAuthenticated = 1596045795;
 
-      var proveTx = await identityOracle.prove(address, lastAuthenticated, proof, { gasLimit: 200000 });
+      var proveTx = await identityOracle.prove(address, lastAuthenticated, proof, addrIndexInTree, { gasLimit: 200000 });
 
       var receipt = await proveTx.wait()
       let proofResult = receipt.events.pop()
 
-      expect(proofResult.event).to.equal('ProofResult');
-      expect(proofResult.eventSignature).to.equal('ProofResult(bool)');
+      expect(proofResult.event).to.equal('AddressWhitelisted');
+      expect(proofResult.eventSignature).to.equal('AddressWhitelisted(address,uint256)');
 
-      let result = proofResult.args[0]
 
-      expect(result).to.equal(true);
+      expect(proofResult.args[0]).to.equal(address);
+      expect(proofResult.args[1]).to.equal(lastAuthenticated);
     });
     it("Checking isWhitelisted with several values ...", async function () {
 
@@ -58,20 +59,22 @@ skip.if(!developmentChains.includes(network.name)).
         '0xeb5ba0420a052a25247df44c56c85d5dd9a15b8316c61c0ea9882b5180b64533',
         '0x553efbe26bb9edad753c89e3944df2c0db74e14167021adcbfe59393ba331e16'
       ];
+      const addrIndexInTree = 1 //TODO: fix this
+
       let address = '0xf96dADc6D71113F6500e97590760C924dA1eF70e';
       const lastAuthenticated = 1596045795;
 
-      var proveTx = await identityOracle.prove(address, lastAuthenticated, proof, { gasLimit: 200000 });
+      var proveTx = await identityOracle.prove(address, lastAuthenticated, proof, addrIndexInTree,{ gasLimit: 200000 });
 
       var receipt = await proveTx.wait();
       let proofResult = receipt.events.pop();
 
-      expect(proofResult.event).to.equal('ProofResult');
-      expect(proofResult.eventSignature).to.equal('ProofResult(bool)');
+      expect(proofResult.event).to.equal('AddressWhitelisted');
+      expect(proofResult.eventSignature).to.equal('AddressWhitelisted(address,uint256)');
 
-      let result = proofResult.args[0];
 
-      expect(result).to.equal(true);
+      expect(proofResult.args[0]).to.equal(address);
+      expect(proofResult.args[1]).to.equal(lastAuthenticated);
 
       // Te following tests are for isWhitelisted(address _address,uint256 _maxProofAgeInDays, uint256 _maxAuthenticationAgeInDays)
 
