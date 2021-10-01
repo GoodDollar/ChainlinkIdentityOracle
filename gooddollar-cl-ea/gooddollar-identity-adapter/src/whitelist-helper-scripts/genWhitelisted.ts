@@ -72,9 +72,6 @@ async function genWhitelist() {
     parallel,
   )
 
-  // It save the whitelist into json file
-  //await saveToFile({ _filename: 'whitelistedWBlock.json', _content: whitelisted })
-
   // It purge the whitelisted, removing addresses from WhitelistedRemoved event
   const lAuthParallel = 500
 

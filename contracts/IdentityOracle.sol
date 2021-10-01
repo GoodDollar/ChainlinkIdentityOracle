@@ -9,9 +9,9 @@ contract IdentityOracle is Ownable {
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
     bytes32 public stateHash =
-        0x0e8d3a960d058403c71b98a920e76d23683589ded04b08d877f3da31dcca18c6; // current state hash
+        0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015; // current state hash
     string public stateDataIPFS =
-        "bafkreibpjfb52jogprvsjydbyncqbazpcd376r46x6znlzknhzkqkb5pba"; // ipfs cid
+        "QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv"; // ipfs cid
 
     address public CHAINLINK_NODE_ADDRESS =
         0x8CC93F854df3d9815331Cd178f496d4Db1D677A3;
