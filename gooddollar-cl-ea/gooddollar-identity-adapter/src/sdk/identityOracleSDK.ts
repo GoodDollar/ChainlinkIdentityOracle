@@ -35,15 +35,16 @@ function createMerkleHash() {
     return Buffer.from(hash.slice(2), 'hex')
   })
 
-  const merkleTree = new MerkleTree(elements)
+  //NOTICE: we do not sort elements since this is a large tree
+  const merkleTree = new MerkleTree(elements, true)
   const merkleRoot = merkleTree.getRoot().toString('hex')
   fs.writeFileSync('whitelistedTree.json', JSON.stringify({ treeData, merkleRoot }))
+  fs.writeFileSync('merkleRoot.txt', JSON.stringify(merkleRoot))
   return merkleRoot
 }
 
 function _getIPFS_CID() {
-  // Hardcoded to test, It will get IPFS CID from smart contract
-  return 'https://ipfs.io/ipfs/QmboSowciWiTquCFzKgUg8Dpi89fzGTfAywmjF15ygDB4o'
+  return 'https://ipfs.io/ipfs/'+fs.readFileSync('CID.txt').toString().replace('"', '').replace('"', '')
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -64,9 +65,10 @@ async function postTreeData() {
       //handle successful authentication here
       console.log(result)
     })
-    .catch((err) => {
-      //handle error here
-      console.log(err)
+    .catch((error) => {
+      console.error("Error in pinata authentication :")
+      console.error(error) 
+      process.exit(1);
     })
 
   const sourcePath = 'whitelistedTree.json'
@@ -78,9 +80,10 @@ async function postTreeData() {
       //handle results here
       cid = result.IpfsHash
     })
-    .catch((err) => {
-      //handle error here
-      console.log(err)
+    .catch((error) => {
+      console.error("Error uploading file to IPFS :")
+      console.error(error)
+      process.exit(1);
     })
 
   fs.writeFileSync('CID.txt', JSON.stringify(cid))
@@ -105,18 +108,28 @@ async function createProofFromTreeData(_addr: string) {
   if (!treeData.hasOwnProperty(_addr)) {
     throw console.error('error : ' + _addr + "  doesn't exist")
   }
-  //const merkleRoot = data["merkleRoot"];
-  const elements = Object.entries(treeData as Tree).map((e) =>
-    Buffer.from(e[1].hash.slice(2), 'hex'),
-  )
-  const merkleTree = new MerkleTree(elements)
-  const proof = merkleTree
-    .getProof(Buffer.from(treeData[_addr].hash.slice(2), 'hex'))
-    .map((_: { toString: (arg0: string) => string }) => '0x' + _.toString('hex'))
 
-  //console.log({ proof, [_addr]: treeData[_addr] });
-  return proof
+
+  let entries = Object.entries(treeData as Tree);
+  let elements = entries.map(e => Buffer.from(e[1].hash.slice(2), "hex"))
+
+  console.log("creating merkletree...", elements.length)
+
+  //NOTICE: tree not sorted
+  const merkleTree = new MerkleTree(elements, true)
+
+  const calcMerkleRoot = merkleTree.getRoot().toString("hex")
+
+  const addrData = treeData[_addr]
+  const proofFor = Buffer.from(addrData.hash.slice(2), "hex")
+
+  const proof = merkleTree.getProof(proofFor)
+  const proofIndex = entries.findIndex(_ => _[1].hash === addrData.hash) + 1
+
+  console.log({ proofIndex, proof, [_addr]: treeData[_addr] })
+
+  return { proof, proofIndex }
 }
 
 export { createMerkleHash, postTreeData, createProofFromTreeData, getTreeData }
-//export { createMerkleHash, createProofFromTreeData, getTreeData }
+

@@ -1,3 +1,101 @@
+# Chainlink Interaction
+
+Create a CL Node and Fund the cl node address with ETH
+
+## Bridge
+Create a bridge for the external adapter
+
+```
+Bridge Name
+gooddollar-bridge
+Bridge URL
+http://localhost:8080
+Minimum Contract Payment
+0
+Confirmations
+0
+```
+## Chainlink Jobs
+
+Create the jobs
+
+### JOB: genstatehashipfscid
+
+This job is started by cron to generates the Addresses whitelist, upload it to IPFS, and creates the merkle hash, finally it saves this two parametes in filesystem. It takes more than one hour for about 230000 Addresses.
+
+```
+type = "cron"
+schemaVersion = 1
+name = "genstatehashipfscid"
+schedule = "CRON_TZ=UTC 0 30 19 * * *"
+observationSource = """
+    gen_statehash_ipfscid [type=bridge name="gooddollar-bridge" requestData="{\\"data\\": {\\"endpoint\\":\\"genstatehashipfscid\\"}}"]
+                
+    gen_statehash_ipfscid
+"""
+```
+
+### JOB: getstatehashipfscid
+
+This job is a runlog one that return the external adapter long response values to the IdentityOracle smartcontract.
+
+```
+type = "cron"
+schemaVersion = 1
+name = "getstatehashipfscid"
+schedule = "CRON_TZ=UTC 0 30 21 * * *"
+observationSource = """
+    fetch_hash [type=bridge name="gooddollar-bridge" requestData="{\\"data\\": {\\"endpoint\\":\\"getstatehashipfscid\\"}}"]
+    json_parser [type="jsonparse"
+              data="$(fetch_hash)"
+              path="result"]
+    encode_tx  [type=ethabiencode
+                          abi="setFulfillStateHashIPFSCID(bytes result)" 
+                          data=<{ "result": $(json_parser) }>]
+    submit_tx [type=ethtx to="0x8CC93F854df3d9815331Cd178f496d4Db1D677A3" data="$(encode_tx)"]                     
+    
+    fetch_hash -> json_parser -> encode_tx -> submit_tx
+"""
+```
+
+## Involved Smart contracts
+
+### Oracle contract
+
+Operator.sol 
+```
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.7.0;
+
+import "https://github.com/smartcontractkit/chainlink/blob/v0.10.13/contracts/src/v0.7/Operator.sol";
+```
+
+in this example it was deployed with address: 0x4f4202CCAf8999Cf86e02cB9324B909aE0Fe1E04
+
+
+To autorize the node to fulfill requests invoke the function:
+setAuthorizedSenders(["CHAINLINK_NODE_ADDRESS"])
+
+in this example it has the address: 0xEa87db1524Ae4469CD5fD0b0fa490CB8662C8CF8
+
+
+### Identity Oracle
+
+./contracts/IdentityOracle.sol 
+
+in this example it was deployed with address: 0x8CC93F854df3d9815331Cd178f496d4Db1D677A3
+
+## workflow
+
+1. Chainlink node starts the cron job genstatehashipfscid
+   + It goes throught the bridge and starts the process genstatehashipfscid 
+2. Chainlink node starts the cron job getstatehashipfscid job ID.
+     + The Chainlink JOB request goes through the bridge
+       - Call the external adapter and it returns the merklehash and Ipfscid
+       - The job responses with a bytes "long response" the merklehash concatenated with the Ipfscid 
+   + Finally node responses calling the function setFulfillStateHashIPFSCID of the IdentityOracle smart contract. 
+
+
 <br/>
 <p align="center">
 <a href="https://chain.link" target="_blank">
@@ -89,12 +187,6 @@ To run unit tests:
 yarn test
 ```
 
-To run integration tests:
-
-```bash
-yarn test-integration
-```
-
 ## Run
 
 The deployment output will give you the contract addresses as they are deployed. You can then use these contract addresses in conjunction with Hardhat tasks to perform operations on each contract
@@ -104,12 +196,6 @@ The IdentityOracle contract has two tasks, one to request startstartIPFSandState
 
 ```bash
 npx hardhat fund-link --contract insert-contract-address-here --network network
-```
-
-Once it's funded, you can run the request-data task. The contract parameter is mandatory, the rest are optional
-
-```bash
-npx hardhat request-data --contract insert-contract-address-here --network network
 ```
 
 Once you have successfully made a request for external data, you can see the result via the read-data task
