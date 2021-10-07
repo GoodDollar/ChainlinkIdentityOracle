@@ -10,7 +10,7 @@ export default async (
   step = 20000,
   parallel = 5,
 ) => {
-  const latestBlock = 6250000 //await contract.provider.getBlockNumber()
+  const latestBlock = await contract.provider.getBlockNumber()
   const blocks = range(startBlock, latestBlock, step)
 
   for (const blockChunk of chunk(blocks, parallel)) {

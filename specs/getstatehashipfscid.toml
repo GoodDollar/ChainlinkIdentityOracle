@@ -1,0 +1,16 @@
+type = "cron"
+schemaVersion = 1
+name = "getstatehashipfscid"
+schedule = "CRON_TZ=UTC 0 30 21 * * *"
+observationSource = """
+    fetch_hash [type=bridge name="gooddollar-bridge" requestData="{\\"data\\": {\\"endpoint\\":\\"getstatehashipfscid\\"}}"]
+    json_parser [type="jsonparse"
+              data="$(fetch_hash)"
+              path="result"]
+    encode_tx  [type=ethabiencode
+                          abi="setFulfillStateHashIPFSCID(bytes result)" 
+                          data=<{ "result": $(json_parser) }>]
+    submit_tx [type=ethtx to="IDENTITYORACLE_CONTRACT_ADDRESS" data="$(encode_tx)"]
+
+    fetch_hash -> json_parser -> encode_tx -> submit_tx
+"""
