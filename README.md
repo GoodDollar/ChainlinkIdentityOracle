@@ -187,19 +187,4 @@ To run unit tests:
 yarn test
 ```
 
-## Run
-
-The deployment output will give you the contract addresses as they are deployed. You can then use these contract addresses in conjunction with Hardhat tasks to perform operations on each contract
-
-### To run the startstartIPFSandStateHashProcess() function & Receive the results
-The IdentityOracle contract has two tasks, one to request startstartIPFSandStateHashProcess() function execution, and one to recieve the results. This contract needs to be funded with link first:
-
-```bash
-npx hardhat fund-link --contract insert-contract-address-here --network network
-```
-
-Once you have successfully made a request for external data, you can see the result via the read-data task
-```bash
-npx hardhat read-data --contract insert-contract-address-here --network network
-```
 
