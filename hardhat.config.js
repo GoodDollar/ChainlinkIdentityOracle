@@ -38,10 +38,10 @@ module.exports = {
         },
         kovan: {
             url: KOVAN_RPC_URL,
-             accounts: [PRIVATE_KEY],
-            //accounts: {
+             accounts: [PRIVATE_KEY || ''],
+            // accounts: {
             //    mnemonic: MNEMONIC,
-            //},
+            // },
             saveDeployments: true,
         },
         rinkeby: {
@@ -79,12 +79,21 @@ module.exports = {
         },
         feeCollector: {
             default: 1
-        }
+        },
+        avatar: {
+            default: 2
+        },
     },
     solidity: {
         compilers: [
             {
-                version: "0.8.2"
+                version: "0.8.2",
+                settings: {
+                    optimizer: {
+                      enabled: true,
+                      runs: 200
+                    }
+                  }
             },
             {
                 version: "0.6.6"

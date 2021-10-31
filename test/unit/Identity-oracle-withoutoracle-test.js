@@ -6,9 +6,11 @@ const { getChainId } = require('hardhat')
 
 skip.if(!developmentChains.includes(network.name)).
   describe("IdentityOracle", function () {
-    let identityOracle
+    let identityOracle, testOracle
 
     beforeEach(async () => {
+      const signers = await ethers.getSigners()
+      testOracle = signers[2]
       const chainId = await getChainId()
       await deployments.fixture(['mocks', 'api'])
       const LinkToken = await deployments.get('LinkToken')
@@ -22,14 +24,31 @@ skip.if(!developmentChains.includes(network.name)).
       identityOracle = await ethers.getContractAt('IdentityOracle', IdentityOracle.address)
     })
 
-    it("Testing setter and getter function to stateHash and stateDataIPFS ...", async function () {
+    it("should allow to add oracle", async () => {
+      await identityOracle.setOracle(testOracle.address,true)
+      expect(await identityOracle.oracleState(testOracle.address)).to.eq(true)
+    })
 
+    it("should allow oracle to post result", async () => {
+      await identityOracle.setOracle(testOracle.address,true)
+      let encoded = identityOracle.interface._abiCoder.encode(
+      ["bytes32", "bytes"],
+      ["0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015", ethers.utils.toUtf8Bytes("QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv")]
+      );
+      await identityOracle.connect(testOracle).setFulfillStateHashIPFSCID(encoded)
       expect(await identityOracle.stateHash()).to.equal("0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015")
       expect(await identityOracle.stateDataIPFS()).to.equal('QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv')
-
     })
+
     it('Testing prove function with a first set of values ...', async function () {
 
+      await identityOracle.setOracle(testOracle.address,true)
+      let encoded = identityOracle.interface._abiCoder.encode(
+      ["bytes32", "bytes"],
+      ["0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015", ethers.utils.toUtf8Bytes("QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv")]
+      );
+      await identityOracle.connect(testOracle).setFulfillStateHashIPFSCID(encoded)
+      
       const proof = [
         '0x7bc8520406917b1df974038b71fdf950d153eb984f8865ee1eed44ba48aa0d75',
         '0xd04ba8f6ec39f1ea12cf89af3bec89412f5287e578969ecc001cfb5d6e91193e'
@@ -52,8 +71,15 @@ skip.if(!developmentChains.includes(network.name)).
       expect(proofResult.args[0]).to.equal(address)
       expect(proofResult.args[1]).to.equal(lastAuthenticated)
     })
-    it("Checking isWhitelisted with several values ...", async function () {
 
+    it("Checking isWhitelisted with several values ...", async function () {
+      await identityOracle.setOracle(testOracle.address,true)
+      let encoded = identityOracle.interface._abiCoder.encode(
+      ["bytes32", "bytes"],
+      ["0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015", ethers.utils.toUtf8Bytes("QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv")]
+      );
+      await identityOracle.connect(testOracle).setFulfillStateHashIPFSCID(encoded)
+      
       expect(await identityOracle.stateHash()).to.equal("0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015")
       expect(await identityOracle.stateDataIPFS()).to.equal('QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv')
 

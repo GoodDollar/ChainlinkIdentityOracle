@@ -2,19 +2,11 @@
 
 pragma solidity >0.8.0;
 
-import "hardhat/console.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract IdentityOracle is Ownable {
+contract IdentityOracle {
     address public dao_avatar; // this implementation is only to test. In live it would be replaced for dao.avatar
 
-    bytes32 public stateHash =
-        0x8412eb0aef944b1828a24a5e1e5e830db4e699761d79ded0c538f1b5016e3015; // current state hash
-    string public stateDataIPFS =
-        "QmchVu39NyTRdrpg4ATPLLc44guHMNFZEHZnDimSAyKxMv"; // ipfs cid
-
-    address public CHAINLINK_NODE_ADDRESS =
-        0x8CC93F854df3d9815331Cd178f496d4Db1D677A3;
+    bytes32 public stateHash;
+    string public stateDataIPFS;
 
     uint256 public lastStartUpdProcInvoked;
 
@@ -25,14 +17,13 @@ contract IdentityOracle is Ownable {
 
     mapping(address => WhitelistProofState) private whitelistProofState;
 
+    mapping(address => bool) public oracleState; // Store oracle address ad if isAllowed
+
     event AddressWhitelisted(address addr, uint256 lastAuthenticationDate);
 
-    mapping(address => bool) private oracleState; // Store oracle address ad if isAllowed
-
-    constructor(address _link) Ownable() {
-        dao_avatar = msg.sender;
-        oracleState[CHAINLINK_NODE_ADDRESS] = true;
-        oracleState[msg.sender] = true;
+    constructor(address _avatar, address _oracle) {
+        dao_avatar = _avatar;
+        oracleState[_oracle] = true;
     }
 
     function _onlyOracle() internal view {
@@ -163,10 +154,5 @@ contract IdentityOracle is Ownable {
             }
         }
         return result;
-    }
-
-    function setCLNodeAdderss(address _clnodeaddress) public {
-        _onlyAvatar();
-        CHAINLINK_NODE_ADDRESS = _clnodeaddress;
     }
 }

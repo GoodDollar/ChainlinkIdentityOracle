@@ -5,7 +5,7 @@ module.exports = async ({
   deployments
 }) => {
   const { deploy, log, get } = deployments
-  const { deployer } = await getNamedAccounts()
+  const { deployer, avatar } = await getNamedAccounts()
   const chainId = await getChainId()
   let linkTokenAddress
   let oracle
@@ -29,11 +29,11 @@ module.exports = async ({
 
   const identityOracle = await deploy('IdentityOracle', {
     from: deployer,
-    args: [linkTokenAddress],
+    args: [deployer, oracle],
     log: true
   })
 
-  log("Run IdentityOracle contract with following command:")
+  log("Run IdentityOracle contract with following command:", {deployer, oracle})
   log("npx hardhat request-data --contract " + identityOracle.address + " --network " + networkName)
   log("----------------------------------------------------")
 }
