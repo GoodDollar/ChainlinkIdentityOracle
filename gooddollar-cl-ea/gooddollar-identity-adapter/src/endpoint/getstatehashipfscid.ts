@@ -1,7 +1,9 @@
 import { ethers } from 'ethers'
 import { Requester, Validator } from '@chainlink/external-adapter'
 import { ExecuteWithConfig, Config } from '@chainlink/types'
-import * as fs from 'fs'
+import * as faunadb from 'faunadb'
+import { config } from 'dotenv'
+config()
 
 //import { NAME as AdapterName } from '../config'
 
@@ -15,10 +17,23 @@ export const execute: ExecuteWithConfig<Config> = async (request, config) => {
 
   const jobRunID = validator.validated.id
 
-  //const result = `0x637162617a70636433373672343678367a6e6c7a6b6e687a6b716b6235706261`
-  const cid: string = fs.readFileSync('CID.txt').toString().replace('"', '').replace('"', '')
+  const faunadbApiSecret =
+    process.env.FAUNADB_API_SECRET != undefined ? process.env.FAUNADB_API_SECRET : ''
+  const faunadbClient = new faunadb.Client({ secret: faunadbApiSecret })
+  const query = faunadb.query
+  type faunadbType = {
+    [data: string]: { treeIPFSHash: string; merkleRootHash: string }
+  }
+  const resultQuery: faunadbType = await faunadbClient.query(
+    query.Get(query.Ref(query.Collection('IPFS'), '1')),
+  )
+
+  console.log(resultQuery.data.treeIPFSHash)
+  console.log(resultQuery.data.merkleRootHash)
+
+  const cid: string = resultQuery.data.treeIPFSHash.toString().replace('"', '').replace('"', '')
   const statehash: string =
-    '0x' + fs.readFileSync('merkleRoot.txt').toString().replace('"', '').replace('"', '')
+    '0x' + resultQuery.data.merkleRootHash.toString().replace('"', '').replace('"', '')
 
   const result = ethers.utils.defaultAbiCoder.encode(['bytes32', 'string'], [statehash, cid])
 

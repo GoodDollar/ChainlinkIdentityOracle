@@ -4,6 +4,9 @@ import saveToFile from './utils'
 import { ethers } from 'ethers'
 import { identity as identityContractABI } from './identityContractABI.json'
 import { createMerkleHash, getTreeData, postTreeData } from './../sdk/identityOracleSDK'
+import * as faunadb from 'faunadb'
+import { config } from 'dotenv'
+config()
 
 const url = 'https://rpc.fuse.io/'
 const provider: ethers.providers.JsonRpcProvider = new ethers.providers.JsonRpcProvider(url)
@@ -82,8 +85,20 @@ async function genWhitelist() {
     _content: whitelistedWLastAuthenticated,
   })
 
-  await createMerkleHash()
-  console.log('ipfs cid: ' + (await postTreeData()))
+  const merkleRoot = await createMerkleHash()
+  const IPFSCID = await postTreeData()
+
+  const faunadbApiSecret =
+    process.env.FAUNADB_API_SECRET != undefined ? process.env.FAUNADB_API_SECRET : ''
+  const faunadbClient = new faunadb.Client({ secret: faunadbApiSecret })
+  const query = faunadb.query
+  await faunadbClient.query(
+    query.Update(query.Ref(query.Collection('IPFS'), '1'), {
+      data: { treeIPFSHash: '"' + IPFSCID + '"', merkleRootHash: '"' + merkleRoot + '"' },
+    }),
+  )
+
+  console.log('ipfs cid: ' + IPFSCID)
 }
 
 export { genWhitelist }
